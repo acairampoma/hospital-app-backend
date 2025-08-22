@@ -20,12 +20,14 @@ class ListaService:
     ) -> List[Dict[str, Any]]:
         """Obtener camas desde vista_pacientes_por_cama"""
         
-        # Query básica para obtener todas las camas con pacientes
+        # Query básica para obtener solo las camas con pacientes reales
         query = """
             SELECT 
                 bed_number,
                 patient_data
             FROM vista_pacientes_por_cama
+            WHERE patient_data IS NOT NULL 
+            AND patient_data::text != 'null'
         """
         
         result = await db.execute(text(query))
@@ -233,6 +235,7 @@ class ListaService:
                 patient_data
             FROM vista_pacientes_por_cama
             WHERE patient_data IS NOT NULL
+            AND patient_data::text != 'null'
         """
         
         result = await db.execute(text(query))
