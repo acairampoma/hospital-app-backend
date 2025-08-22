@@ -8,10 +8,10 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
-    # 🗄️ Database - CONECTAR A LA MISMA BD DEL MONOREPO JAVA
+    # 🗄️ Database - Railway PostgreSQL (misma estrategia que galloapp_backend)
     DATABASE_URL: str = config(
         "DATABASE_URL",
-        default="postgresql://postgres:123456@localhost:5432/bd_hdigital"
+        default="postgresql://postgres:QzlJMZtbYmqOxVSspnQAICcTDjkgOqMG@switchback.proxy.rlwy.net:43095/railway"
     )
     
     # 🌐 CORS

@@ -127,6 +127,11 @@ class OrdenCabCreate(OrdenCabBase):
     paciente_id: int
     paciente_nombre: str
     paciente_documento: str
+    paciente_edad: Optional[int] = None
+    paciente_genero: Optional[str] = None  # M/F
+    paciente_cama: Optional[str] = None
+    paciente_sala: Optional[str] = None
+    medico_nombre: Optional[str] = None
     fecha_solicitada: Optional[datetime] = None
     servicio_destino: Optional[str] = None
     examenes: List[OrdenDetCreate] = []
