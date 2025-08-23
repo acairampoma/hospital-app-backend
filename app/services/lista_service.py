@@ -6,7 +6,11 @@ from datetime import datetime, timedelta
 import json
 
 class ListaService:
+<<<<<<< HEAD
     """🛏️ Servicio de Listas y Gestión de Camas - Compatible con vistas PostgreSQL"""
+=======
+    """🏏️ Servicio de Listas y Gestión de Camas - Compatible con vistas PostgreSQL"""
+>>>>>>> 976334144a0af379d156358319c755a0e2f145e7
     
     # ===== GESTIÓN DE CAMAS =====
     
@@ -235,6 +239,10 @@ class ListaService:
                 patient_data
             FROM vista_pacientes_por_cama
             WHERE patient_data IS NOT NULL
+<<<<<<< HEAD
+=======
+            AND patient_data::text != 'null'
+>>>>>>> 976334144a0af379d156358319c755a0e2f145e7
         """
         
         result = await db.execute(text(query))

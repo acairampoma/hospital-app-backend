@@ -26,7 +26,7 @@ async def obtener_listado_camas(
     current_user_id: int = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db)
 ):
-    """🛏️ Obtener listado de camas con filtros"""
+    """🏏️ Obtener listado de camas con filtros"""
     
     try:
         camas = await ListaService.obtener_camas_con_filtros(
