@@ -58,7 +58,7 @@ async def login(user_data: UserLogin, db: AsyncSession = Depends(get_db)):
     
     try:
         # Autenticar usuario
-        user = await AuthService.authenticate_user(db, user_data.username, user_data.password)
+        user = await AuthService.authenticate_user(db, user_data.email, user_data.password)
         
         # Crear tokens
         tokens = AuthService.create_tokens_for_user(user)

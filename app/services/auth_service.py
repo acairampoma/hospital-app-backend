@@ -61,11 +61,11 @@ class AuthService:
         return db_user
     
     @staticmethod
-    async def authenticate_user(db: AsyncSession, username: str, password: str) -> User:
+    async def authenticate_user(db: AsyncSession, email: str, password: str) -> User:
         """Autenticar usuario"""
         
-        # Buscar usuario por username
-        result = await db.execute(select(User).where(User.username == username))
+        # Buscar usuario por email
+        result = await db.execute(select(User).where(User.email == email))
         user = result.scalar_one_or_none()
         
         if not user:

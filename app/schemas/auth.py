@@ -6,7 +6,7 @@ from datetime import datetime
 
 class UserLogin(BaseModel):
     """Login request"""
-    username: str  # Cambié de email a username
+    email: EmailStr  # Cambié de username a email
     password: str
 
 class UserRegister(BaseModel):
