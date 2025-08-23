@@ -9,6 +9,7 @@ from app.schemas.user import UserResponse
 from app.services.cloudinary_service import cloudinary_service
 from app.services.email_service import email_service
 from app.services.auth_service import AuthService
+from app.models.password_reset_token import PasswordResetToken
 from typing import Optional
 from datetime import datetime
 import logging
@@ -206,15 +207,27 @@ async def send_recovery_code(
                 detail="Email no registrado en el sistema"
             )
         
-        # 2. Enviar código por SendGrid
+        # 2. Invalidar tokens anteriores
+        await db.execute(
+            "UPDATE password_reset_tokens SET used = true WHERE user_id = :user_id AND used = false",
+            {"user_id": user.id}
+        )
+        
+        # 3. Crear nuevo token
+        reset_token = PasswordResetToken.create_token(user.id, email)
+        db.add(reset_token)
+        await db.commit()
+        await db.refresh(reset_token)
+        
+        # 4. Enviar código por SendGrid
         result = await email_service.send_recovery_code(
             email=email,
-            name=user.nombre_completo or user.username
+            name=user.nombre_completo or user.username,
+            code=reset_token.token  # Enviar el código real
         )
         
         if result["success"]:
-            # TODO: Guardar código en caché/DB con expiración
-            logger.info(f"✅ Código de recuperación enviado a {email}")
+            logger.info(f"✅ Código {reset_token.token} enviado a {email}")
             
             return ApiResponse.success_response(
                 data={
@@ -243,25 +256,84 @@ async def send_recovery_code(
 async def verify_recovery_code(
     email: str = Form(..., description="Email del usuario"),
     code: str = Form(..., description="Código de recuperación"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    🔐 Verificar código de recuperación
+    """
+    try:
+        # Buscar token válido
+        result = await db.execute(
+            "SELECT * FROM password_reset_tokens WHERE email = :email AND token = :code AND used = false AND expires_at > NOW()",
+            {"email": email, "code": code}
+        )
+        token_row = result.first()
+        
+        if token_row:
+            return ApiResponse.success_response(
+                data={
+                    "email": email,
+                    "code_valid": True,
+                    "message": "Código válido. Puedes cambiar tu contraseña"
+                },
+                message="Código verificado exitosamente"
+            )
+        else:
+            return ApiResponse.error_response(
+                message="Código inválido o expirado",
+                status_code=400
+            )
+    
+    except Exception as e:
+        logger.error(f"❌ Error verificando código: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Error interno del servidor"
+        )
+
+@router.post("/reset-password", response_model=ApiResponse[dict])
+async def reset_password(
+    email: str = Form(..., description="Email del usuario"),
+    code: str = Form(..., description="Código de recuperación"),
     new_password: str = Form(..., description="Nueva contraseña"),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    🔐 Verificar código y cambiar contraseña
+    🔐 Cambiar contraseña con código
     """
     try:
-        # TODO: Verificar código desde caché/DB
-        # Por ahora solo simulamos la verificación
+        # 1. Validar contraseña fuerte
+        if len(new_password) < 8:
+            raise HTTPException(status_code=400, detail="Contraseña debe tener al menos 8 caracteres")
+        if not any(c.isupper() for c in new_password):
+            raise HTTPException(status_code=400, detail="Contraseña debe tener al menos una mayúscula")
+        if not any(c.islower() for c in new_password):
+            raise HTTPException(status_code=400, detail="Contraseña debe tener al menos una minúscula")
+        if not any(c.isdigit() for c in new_password):
+            raise HTTPException(status_code=400, detail="Contraseña debe tener al menos un número")
+        if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in new_password):
+            raise HTTPException(status_code=400, detail="Contraseña debe tener al menos un símbolo especial")
         
+        # 2. Verificar token válido
+        result = await db.execute(
+            "SELECT * FROM password_reset_tokens WHERE email = :email AND token = :code AND used = false AND expires_at > NOW()",
+            {"email": email, "code": code}
+        )
+        token_row = result.first()
+        
+        if not token_row:
+            raise HTTPException(status_code=400, detail="Código inválido o expirado")
+        
+        # 3. Cambiar contraseña
         user = await AuthService.get_user_by_email(db, email)
-        if not user:
-            raise HTTPException(
-                status_code=404,
-                detail="Usuario no encontrado"
-            )
-        
-        # Cambiar contraseña
         success = await AuthService.reset_password(db, user.id, new_password)
+        
+        # 4. Marcar token como usado
+        await db.execute(
+            "UPDATE password_reset_tokens SET used = true WHERE id = :token_id",
+            {"token_id": token_row.id}
+        )
+        await db.commit()
         
         if success:
             return ApiResponse.success_response(
@@ -273,15 +345,12 @@ async def verify_recovery_code(
                 message="Contraseña cambiada exitosamente"
             )
         else:
-            raise HTTPException(
-                status_code=400,
-                detail="Error cambiando contraseña"
-            )
+            raise HTTPException(status_code=400, detail="Error cambiando contraseña")
     
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error verificando código: {str(e)}")
+        logger.error(f"❌ Error reseteando contraseña: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail="Error interno del servidor"
