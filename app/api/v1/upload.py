@@ -204,7 +204,7 @@ async def send_recovery_code(
         if not user:
             raise HTTPException(
                 status_code=404,
-                detail="Email no registrado en el sistema"
+                detail="Lo siento, correo no registrado. Comunícarse con soporte"
             )
         
         # 2. Invalidar tokens anteriores
