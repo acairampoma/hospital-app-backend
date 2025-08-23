@@ -116,9 +116,10 @@ async def register_user_with_photo(
             
             if upload_result["success"]:
                 photo_url = upload_result["url"]
-                logger.info(f"✅ Foto subida: {photo_url}")
+                logger.info(f"✅ Foto subida exitosamente a Cloudinary: {photo_url}")
             else:
-                logger.warning(f"⚠️ Error subiendo foto: {upload_result['message']}")
+                logger.error(f"❌ Error subiendo foto a Cloudinary: {upload_result['message']}")
+                photo_url = None
         
         # 3. Preparar datos profesionales para JSONB
         datos_profesional = {}
@@ -132,8 +133,11 @@ async def register_user_with_photo(
             datos_profesional["cargo"] = cargo
         if photo_url:
             datos_profesional["foto_url"] = photo_url
+            logger.info(f"📸 Agregando foto_url a datos_profesional: {photo_url}")
         
         # 4. Crear usuario en la base de datos
+        logger.info(f"📦 datos_profesional a guardar: {datos_profesional}")
+        
         from app.schemas.auth import UserRegister
         user_data = UserRegister(
             username=username,
