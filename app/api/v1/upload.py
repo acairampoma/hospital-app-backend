@@ -223,7 +223,7 @@ async def send_recovery_code(
         result = await email_service.send_recovery_code(
             email=email,
             name=user.nombre_completo or user.username,
-            code=reset_token.token  # Enviar el código real
+            code=reset_token.token  # Usar el código de la tabla
         )
         
         if result["success"]:

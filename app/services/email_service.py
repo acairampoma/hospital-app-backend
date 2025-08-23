@@ -19,11 +19,12 @@ class EmailService:
         self.from_email = settings.SENDGRID_FROM_EMAIL
         self.from_name = settings.SENDGRID_FROM_NAME
     
-    async def send_recovery_code(self, email: str, name: str = "Usuario") -> Dict[str, Any]:
+    async def send_recovery_code(self, email: str, name: str = "Usuario", code: str = None) -> Dict[str, Any]:
         """Enviar código de recuperación"""
         try:
-            # Generar código de 6 dígitos
-            code = ''.join(random.choices(string.digits, k=6))
+            # Usar código proporcionado o generar uno nuevo
+            if not code:
+                code = ''.join(random.choices(string.digits, k=6))
             
             # HTML template
             html_content = f"""
