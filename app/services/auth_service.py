@@ -33,13 +33,20 @@ class AuthService:
         hashed_password = SecurityService.get_password_hash(user_data.password)
         
         # Preparar datos profesionales para JSONB
-        datos_profesional = {}
-        if user_data.especialidad:
-            datos_profesional['especialidad'] = user_data.especialidad
-        if user_data.colegiatura:
-            datos_profesional['colegiatura'] = user_data.colegiatura
-        if user_data.cargo:
-            datos_profesional['cargo'] = user_data.cargo
+        # Primero usar datos_profesional si viene completo
+        if hasattr(user_data, 'datos_profesional') and user_data.datos_profesional:
+            datos_profesional = user_data.datos_profesional
+        else:
+            # Si no, construirlo desde campos individuales
+            datos_profesional = {}
+            if user_data.especialidad:
+                datos_profesional['especialidad'] = user_data.especialidad
+            if user_data.colegiatura:
+                datos_profesional['colegiatura'] = user_data.colegiatura
+            if user_data.cargo:
+                datos_profesional['cargo'] = user_data.cargo
+            if user_data.telefono:
+                datos_profesional['telefono'] = user_data.telefono
         
         db_user = User(
             username=user_data.username,
