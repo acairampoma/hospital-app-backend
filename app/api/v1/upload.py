@@ -3,6 +3,7 @@
 """
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
 from app.database import get_db
 from app.schemas.common import ApiResponse, MessageResponse
 from app.schemas.user import UserResponse
@@ -209,7 +210,7 @@ async def send_recovery_code(
         
         # 2. Invalidar tokens anteriores
         await db.execute(
-            "UPDATE password_reset_tokens SET used = true WHERE user_id = :user_id AND used = false",
+            text("UPDATE password_reset_tokens SET used = true WHERE user_id = :user_id AND used = false"),
             {"user_id": user.id}
         )
         
@@ -264,7 +265,7 @@ async def verify_recovery_code(
     try:
         # Buscar token válido
         result = await db.execute(
-            "SELECT * FROM password_reset_tokens WHERE email = :email AND token = :code AND used = false AND expires_at > NOW()",
+            text("SELECT * FROM password_reset_tokens WHERE email = :email AND token = :code AND used = false AND expires_at > NOW()"),
             {"email": email, "code": code}
         )
         token_row = result.first()
@@ -316,7 +317,7 @@ async def reset_password(
         
         # 2. Verificar token válido
         result = await db.execute(
-            "SELECT * FROM password_reset_tokens WHERE email = :email AND token = :code AND used = false AND expires_at > NOW()",
+            text("SELECT * FROM password_reset_tokens WHERE email = :email AND token = :code AND used = false AND expires_at > NOW()"),
             {"email": email, "code": code}
         )
         token_row = result.first()
@@ -330,7 +331,7 @@ async def reset_password(
         
         # 4. Marcar token como usado
         await db.execute(
-            "UPDATE password_reset_tokens SET used = true WHERE id = :token_id",
+            text("UPDATE password_reset_tokens SET used = true WHERE id = :token_id"),
             {"token_id": token_row.id}
         )
         await db.commit()
