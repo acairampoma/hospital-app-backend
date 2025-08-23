@@ -31,9 +31,6 @@ class Settings:
     SENDGRID_API_KEY: str = config("SENDGRID_API_KEY", default="")
     SENDGRID_FROM_EMAIL: str = config("SENDGRID_FROM_EMAIL", default="noreply@hospital.com")
     
-    # 📷 Cloudinary Configuration
-    CLOUDINARY_CLOUD_NAME: str = config("CLOUDINARY_CLOUD_NAME", default="")
-    CLOUDINARY_API_KEY: str = config("CLOUDINARY_API_KEY", default="")
-    CLOUDINARY_API_SECRET: str = config("CLOUDINARY_API_SECRET", default="")
+    # 📷 Cloudinary - Configurado directo sin env vars (como galloapp)
 
 settings = Settings()

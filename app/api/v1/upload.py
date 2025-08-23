@@ -43,7 +43,34 @@ async def register_user_with_photo(
     try:
         logger.info(f"🔄 Iniciando registro para: {email}")
         
-        # 1. Verificar si el usuario ya existe
+        # 1. Validar contraseña segura
+        if len(password) < 8:
+            raise HTTPException(
+                status_code=400,
+                detail="La contraseña debe tener al menos 8 caracteres"
+            )
+        if not any(c.isupper() for c in password):
+            raise HTTPException(
+                status_code=400,
+                detail="La contraseña debe tener al menos una mayúscula"
+            )
+        if not any(c.islower() for c in password):
+            raise HTTPException(
+                status_code=400,
+                detail="La contraseña debe tener al menos una minúscula"
+            )
+        if not any(c.isdigit() for c in password):
+            raise HTTPException(
+                status_code=400,
+                detail="La contraseña debe tener al menos un número"
+            )
+        if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password):
+            raise HTTPException(
+                status_code=400,
+                detail="La contraseña debe tener al menos un símbolo especial"
+            )
+        
+        # 2. Verificar si el usuario ya existe
         existing_user = await AuthService.get_user_by_email(db, email)
         if existing_user:
             raise HTTPException(
