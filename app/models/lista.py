@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Numeric, JSON
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Numeric, JSON, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
 
@@ -36,6 +37,10 @@ class PacientePorCama(Base):
     ala = Column(String(50))
     servicio = Column(String(100))
     habitacion = Column(String(10))
+    
+    # Relación con estructura hospital
+    estructura_id = Column(Integer, ForeignKey("estructura_hospital.id"))
+    estructura = relationship("EstructuraHospital", back_populates="pacientes_por_cama")
     
     # Características de la cama
     tipo_cama = Column(String(50))              # GENERAL, UCI, PEDIATRICA, etc.
@@ -155,6 +160,9 @@ class EstructuraHospital(Base):
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relación con pacientes por cama
+    pacientes_por_cama = relationship("PacientePorCama", back_populates="estructura", lazy="select")
     
     def __repr__(self):
         return f"<EstructuraHospital(id={self.hospital_id}, nombre='{self.nombre_hospital}')>"
