@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1 import auth, usuarios, catalogos, recetas, notas, ordenes, listas
+from app.api.v1 import auth, usuarios, catalogos, recetas, notas, ordenes, listas, upload
 
 api_router = APIRouter()
 
@@ -11,6 +11,7 @@ api_router.include_router(recetas.router, prefix="/recetas", tags=["Medical Pres
 api_router.include_router(notas.router, prefix="/notas", tags=["Medical Notes"])
 api_router.include_router(ordenes.router, prefix="/ordenes", tags=["Medical Orders"])
 api_router.include_router(listas.router, prefix="/listas", tags=["Hospital Lists & Beds"])
+api_router.include_router(upload.router, prefix="/upload", tags=["Upload & Registration"])
 
 # Endpoint principal de salud de la API
 @api_router.get("/health", tags=["Health Check"])

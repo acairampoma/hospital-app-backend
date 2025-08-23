@@ -27,10 +27,13 @@ class Settings:
     # 📄 PDF Configuration
     PDF_OUTPUT_PATH: str = config("PDF_OUTPUT_PATH", default="./temp_pdfs/")
     
-    # 📧 Email Configuration (opcional para notificaciones)
-    SMTP_HOST: str = config("SMTP_HOST", default="")
-    SMTP_PORT: int = config("SMTP_PORT", default=587, cast=int)
-    SMTP_USER: str = config("SMTP_USER", default="")
-    SMTP_PASSWORD: str = config("SMTP_PASSWORD", default="")
+    # 📧 SendGrid Configuration
+    SENDGRID_API_KEY: str = config("SENDGRID_API_KEY", default="")
+    SENDGRID_FROM_EMAIL: str = config("SENDGRID_FROM_EMAIL", default="noreply@hospital.com")
+    
+    # 📷 Cloudinary Configuration
+    CLOUDINARY_CLOUD_NAME: str = config("CLOUDINARY_CLOUD_NAME", default="")
+    CLOUDINARY_API_KEY: str = config("CLOUDINARY_API_KEY", default="")
+    CLOUDINARY_API_SECRET: str = config("CLOUDINARY_API_SECRET", default="")
 
 settings = Settings()

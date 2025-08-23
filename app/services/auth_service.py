@@ -194,3 +194,37 @@ class AuthService:
             "colegiatura": user.colegiatura,
             "cargo": user.cargo
         }
+    
+    @staticmethod
+    async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
+        """Obtener usuario por email"""
+        result = await db.execute(select(User).where(User.email == email))
+        return result.scalar_one_or_none()
+    
+    @staticmethod
+    async def get_user_by_username(db: AsyncSession, username: str) -> Optional[User]:
+        """Obtener usuario por username"""
+        result = await db.execute(select(User).where(User.username == username))
+        return result.scalar_one_or_none()
+    
+    @staticmethod
+    async def reset_password(db: AsyncSession, user_id: int, new_password: str) -> bool:
+        """Resetear contraseña de usuario"""
+        try:
+            result = await db.execute(select(User).where(User.id == user_id))
+            user = result.scalar_one_or_none()
+            
+            if not user:
+                return False
+            
+            # Hash nueva contraseña
+            hashed_password = SecurityService.get_password_hash(new_password)
+            user.password = hashed_password
+            user.updated_at = datetime.utcnow()
+            
+            await db.commit()
+            return True
+            
+        except Exception as e:
+            await db.rollback()
+            raise AuthenticationException(f"Error reseteando contraseña: {str(e)}")
