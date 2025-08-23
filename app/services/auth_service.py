@@ -45,8 +45,8 @@ class AuthService:
             username=user_data.username,
             email=user_data.email,
             password=hashed_password,  # Cambié a password
-            first_name=user_data.nombre_completo.split()[0] if user_data.nombre_completo else None,
-            last_name=" ".join(user_data.nombre_completo.split()[1:]) if user_data.nombre_completo and len(user_data.nombre_completo.split()) > 1 else None,
+            first_name=user_data.first_name if hasattr(user_data, 'first_name') else (user_data.nombre_completo.split()[0] if user_data.nombre_completo else None),
+            last_name=user_data.last_name if hasattr(user_data, 'last_name') else (" ".join(user_data.nombre_completo.split()[1:]) if user_data.nombre_completo and len(user_data.nombre_completo.split()) > 1 else None),
             datos_profesional=datos_profesional if datos_profesional else None,
             enabled=True,
             account_non_expired=True,

@@ -30,6 +30,7 @@ class Settings:
     # 📧 SendGrid Configuration
     SENDGRID_API_KEY: str = config("SENDGRID_API_KEY", default="")
     SENDGRID_FROM_EMAIL: str = config("SENDGRID_FROM_EMAIL", default="noreply@hospital.com")
+    SENDGRID_FROM_NAME: str = config("SENDGRID_FROM_NAME", default="IA Medical Solutions")
     
     # 📷 Cloudinary - Configurado directo sin env vars (como galloapp)
 

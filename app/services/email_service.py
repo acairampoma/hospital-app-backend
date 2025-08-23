@@ -17,6 +17,7 @@ class EmailService:
     def __init__(self):
         self.sendgrid = SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
         self.from_email = settings.SENDGRID_FROM_EMAIL
+        self.from_name = settings.SENDGRID_FROM_NAME
     
     async def send_recovery_code(self, email: str, name: str = "Usuario") -> Dict[str, Any]:
         """Enviar código de recuperación"""
@@ -65,7 +66,7 @@ class EmailService:
             """
             
             message = Mail(
-                from_email=From(self.from_email, "IA Medical Solutions"),
+                from_email=From(self.from_email, self.from_name),
                 to_emails=To(email),
                 subject=Subject("🔐 Código de Recuperación - IA Medical"),
                 plain_text_content=PlainTextContent(f"Tu código de recuperación es: {code}"),
@@ -140,7 +141,7 @@ class EmailService:
             """
             
             message = Mail(
-                from_email=From(self.from_email, "IA Medical Solutions"),
+                from_email=From(self.from_email, self.from_name),
                 to_emails=To(email),
                 subject=Subject("🎉 Bienvenido a IA Medical Solutions"),
                 plain_text_content=PlainTextContent(f"Bienvenido {name}, tu cuenta ha sido creada exitosamente."),
