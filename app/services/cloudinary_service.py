@@ -14,12 +14,8 @@ class CloudinaryService:
     """Servicio para subir imágenes a Cloudinary"""
     
     def __init__(self):
-        # Configurar Cloudinary SIN variables de entorno (como galloapp)
-        cloudinary.config(
-            cloud_name="dwj0sdixs",  # Directo sin env vars
-            api_key="741837977564195",
-            api_secret="zy9YiJbz3VXqc5MpEIpDHgYNLRY"
-        )
+        # Cloudinary ya está configurado en main.py globalmente
+        pass
     
     async def upload_avatar(self, file_content: bytes, filename: str, user_id: str) -> Dict[str, Any]:
         """

@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
+import cloudinary
 
 # 🗄️ Importar modelos ANTES que los routers
 from app.models import *  # Importa todos los modelos
@@ -11,6 +12,13 @@ from app.core.config import settings
 
 # Importar router principal
 from app.api.v1 import api_router
+
+# 📸 Configurar Cloudinary GLOBAL (como en galloapp)
+cloudinary.config(
+    cloud_name="dwj0sdixs",
+    api_key="741837977564195", 
+    api_secret="zy9YiJbz3VXqc5MpEIpDHgYNLRY"
+)
 
 # 🏥 HOSPITAL APP BACKEND - REPLICANDO MONOREPO JAVA
 app = FastAPI(
