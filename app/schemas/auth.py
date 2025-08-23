@@ -14,8 +14,11 @@ class UserRegister(BaseModel):
     email: EmailStr
     username: str
     password: str
-    nombre_completo: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    nombre_completo: Optional[str] = None  # Para compatibilidad
     telefono: Optional[str] = None
+    datos_profesional: Optional[dict] = None  # Para JSONB
     
     # Campos médicos
     especialidad: Optional[str] = None
