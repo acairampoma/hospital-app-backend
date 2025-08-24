@@ -361,6 +361,174 @@ async def reset_password(
             detail="Error interno del servidor"
         )
 
+@router.put("/update-profile", response_model=ApiResponse[UserResponse])
+async def update_user_profile(
+    # Datos básicos
+    firstName: str = Form(..., description="Nombre"),
+    lastName: str = Form(..., description="Apellido"),
+    password: Optional[str] = Form(None, description="Nueva contraseña (opcional)"),
+    
+    # Datos profesionales (opcional)
+    especialidad: Optional[str] = Form(None, description="Especialidad médica"),
+    colegiatura: Optional[str] = Form(None, description="Número de colegiatura"),
+    telefono: Optional[str] = Form(None, description="Teléfono"),
+    cargo: Optional[str] = Form(None, description="Cargo"),
+    
+    # Foto de perfil (opcional)
+    photo: Optional[UploadFile] = File(None, description="Nueva foto de perfil"),
+    
+    # User ID para identificar al usuario
+    user_id: int = Form(..., description="ID del usuario"),
+    
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    ✏️ Actualizar perfil de usuario (todo excepto email y username)
+    """
+    try:
+        logger.info(f"🔄 Actualizando perfil para usuario ID: {user_id}")
+        
+        # 1. Verificar que el usuario existe
+        user = await AuthService.get_user_by_id(db, user_id)
+        if not user:
+            raise HTTPException(
+                status_code=404,
+                detail="Usuario no encontrado"
+            )
+        
+        # 2. Validar contraseña si se proporciona
+        if password:
+            if len(password) < 8:
+                raise HTTPException(status_code=400, detail="Contraseña debe tener al menos 8 caracteres")
+            if not any(c.isupper() for c in password):
+                raise HTTPException(status_code=400, detail="Contraseña debe tener al menos una mayúscula")
+            if not any(c.islower() for c in password):
+                raise HTTPException(status_code=400, detail="Contraseña debe tener al menos una minúscula")
+            if not any(c.isdigit() for c in password):
+                raise HTTPException(status_code=400, detail="Contraseña debe tener al menos un número")
+            if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password):
+                raise HTTPException(status_code=400, detail="Contraseña debe tener al menos un símbolo especial")
+        
+        # 3. Subir nueva foto a Cloudinary si se proporciona
+        photo_url = None
+        if photo and photo.size > 0:
+            logger.info(f"📷 Actualizando foto para usuario {user.username}")
+            
+            # Validar tipo de archivo
+            if not photo.content_type.startswith('image/'):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Solo se permiten archivos de imagen"
+                )
+            
+            # Validar tamaño (5MB máximo)
+            if photo.size > 5 * 1024 * 1024:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Archivo muy grande. Máximo 5MB"
+                )
+            
+            # Subir a Cloudinary
+            photo_content = await photo.read()
+            upload_result = await cloudinary_service.upload_avatar(
+                file_content=photo_content,
+                filename=photo.filename or "avatar_updated.jpg",
+                user_id=user.username
+            )
+            
+            if upload_result["success"]:
+                photo_url = upload_result["url"]
+                logger.info(f"✅ Foto actualizada exitosamente: {photo_url}")
+            else:
+                logger.error(f"❌ Error actualizando foto: {upload_result['message']}")
+                raise HTTPException(
+                    status_code=500,
+                    detail="Error subiendo foto"
+                )
+        
+        # 4. Preparar datos para actualización
+        update_data = {}
+        
+        # Datos básicos
+        update_data["first_name"] = firstName
+        update_data["last_name"] = lastName
+        
+        # Cambiar contraseña si se proporciona
+        if password:
+            from app.core.security import get_password_hash
+            update_data["hashed_password"] = get_password_hash(password)
+        
+        # Obtener datos_profesional actuales
+        current_datos = user.datos_profesional or {}
+        
+        # Actualizar datos profesionales
+        if especialidad is not None:
+            current_datos["especialidad"] = especialidad
+        if colegiatura is not None:
+            current_datos["colegiatura"] = colegiatura
+        if telefono is not None:
+            current_datos["telefono"] = telefono
+        if cargo is not None:
+            current_datos["cargo"] = cargo
+        if photo_url:
+            current_datos["foto_url"] = photo_url
+        
+        update_data["datos_profesional"] = current_datos
+        
+        # 5. Ejecutar actualización usando SQL directo
+        set_clauses = []
+        params = {"user_id": user_id}
+        
+        for field, value in update_data.items():
+            if field == "datos_profesional":
+                set_clauses.append(f"{field} = :datos_profesional")
+                params["datos_profesional"] = json.dumps(value) if value else None
+            else:
+                set_clauses.append(f"{field} = :{field}")
+                params[field] = value
+        
+        update_query = f"UPDATE users SET {', '.join(set_clauses)} WHERE id = :user_id"
+        
+        await db.execute(text(update_query), params)
+        await db.commit()
+        
+        # 6. Obtener usuario actualizado
+        updated_user = await AuthService.get_user_by_id(db, user_id)
+        
+        # 7. Crear response
+        user_response = UserResponse(
+            id=updated_user.id,
+            username=updated_user.username,
+            email=updated_user.email,
+            first_name=updated_user.first_name,
+            last_name=updated_user.last_name,
+            nombre_completo=updated_user.nombre_completo,
+            especialidad=updated_user.especialidad,
+            colegiatura=updated_user.colegiatura,
+            cargo=updated_user.cargo,
+            telefono=updated_user.telefono,
+            enabled=updated_user.enabled,
+            is_active=updated_user.is_active,
+            created_at=updated_user.created_at,
+            last_login=updated_user.last_login
+        )
+        
+        logger.info(f"✅ Perfil actualizado exitosamente para: {updated_user.username}")
+        
+        return ApiResponse.success_response(
+            data=user_response,
+            message="Perfil actualizado exitosamente"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error actualizando perfil: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
 @router.get("/health", response_model=ApiResponse[dict])
 async def upload_health():
     """💚 Health check del módulo de upload"""
@@ -374,12 +542,15 @@ async def upload_health():
             "Cloudinary Image Upload",
             "SendGrid Email Service",
             "Complete User Registration",
-            "Password Recovery"
+            "Password Recovery",
+            "Profile Updates"
         ],
         "endpoints": [
             "POST /upload/register-with-photo",
             "POST /upload/send-recovery-code",
-            "POST /upload/verify-recovery-code"
+            "POST /upload/verify-recovery-code",
+            "POST /upload/reset-password",
+            "PUT /upload/update-profile"
         ]
     }
     

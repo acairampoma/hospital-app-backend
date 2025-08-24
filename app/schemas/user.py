@@ -37,6 +37,7 @@ class UserResponse(BaseModel):
     nombre_completo: Optional[str] = None
     especialidad: Optional[str] = None
     colegiatura: Optional[str] = None
+    foto_url: Optional[str] = None
     enabled: bool = True
     is_active: bool = True
     created_at: datetime

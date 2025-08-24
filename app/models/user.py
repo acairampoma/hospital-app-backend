@@ -84,3 +84,10 @@ class User(Base):
         if self.datos_profesional:
             return self.datos_profesional.get('telefono')
         return None
+    
+    @property
+    def foto_url(self) -> str:
+        """URL de la foto desde datos_profesional"""
+        if self.datos_profesional:
+            return self.datos_profesional.get('foto_url')
+        return None
