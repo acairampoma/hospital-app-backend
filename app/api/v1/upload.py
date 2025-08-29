@@ -10,6 +10,7 @@ from app.schemas.user import UserResponse
 from app.services.cloudinary_service import cloudinary_service
 from app.services.email_service import email_service
 from app.services.auth_service import AuthService
+from app.core.security import get_current_user
 from app.models.password_reset_token import PasswordResetToken
 from typing import Optional
 from datetime import datetime
@@ -531,7 +532,7 @@ async def update_user_profile(
 
 @router.get("/me", response_model=ApiResponse[UserResponse])
 async def get_current_user_profile(
-    current_user=Depends(AuthService.get_current_user),
+    current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """🔒 Obtener perfil del usuario actual con datos frescos y foto URL"""
