@@ -529,6 +529,60 @@ async def update_user_profile(
             detail=f"Error interno del servidor: {str(e)}"
         )
 
+@router.get("/me", response_model=ApiResponse[UserResponse])
+async def get_current_user_profile(
+    current_user=Depends(AuthService.get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """🔒 Obtener perfil del usuario actual con datos frescos y foto URL"""
+    try:
+        logger.info(f"📋 Obteniendo perfil fresco para usuario: {current_user.username}")
+        
+        # Obtener usuario fresco de la BD
+        fresh_user = await AuthService.get_user_by_id(db, current_user.id)
+        
+        if not fresh_user:
+            raise HTTPException(
+                status_code=404,
+                detail="Usuario no encontrado"
+            )
+        
+        # Crear response con TODOS los datos incluyendo foto_url
+        user_response = UserResponse(
+            id=fresh_user.id,
+            username=fresh_user.username,
+            email=fresh_user.email,
+            first_name=fresh_user.first_name,
+            last_name=fresh_user.last_name,
+            nombre_completo=fresh_user.nombre_completo,
+            especialidad=fresh_user.especialidad,
+            colegiatura=fresh_user.colegiatura,
+            cargo=fresh_user.cargo,
+            telefono=fresh_user.telefono,
+            enabled=fresh_user.enabled,
+            is_active=fresh_user.is_active,
+            created_at=fresh_user.created_at,
+            last_login=fresh_user.last_login,
+            # 🔥 INCLUIR FOTO URL si existe
+            foto_url=fresh_user.datos_profesional.get("foto_url") if fresh_user.datos_profesional else None
+        )
+        
+        logger.info(f"✅ Perfil fresco obtenido - foto_url: {user_response.foto_url}")
+        
+        return ApiResponse.success_response(
+            data=user_response,
+            message="Perfil obtenido exitosamente"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error obteniendo perfil: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
 @router.get("/health", response_model=ApiResponse[dict])
 async def upload_health():
     """💚 Health check del módulo de upload"""
